@@ -82,4 +82,23 @@ describe Rack::CAS do
     its(:status) { should eql 401 }
     its(:body) { should eql 'Authorization Required' }
   end
+
+  describe 'gateway_mode' do
+    let(:app_options) { { gateway_mode: true } }
+    subject { get '/public' }
+
+    context 'when no session exists' do
+      its(:status) { should eql 302 }
+    end
+
+    context 'when an anonymous session exists' do
+      subject { get '/public',  {}, "rack.session" =>  {'cas_anonymous' => true}}
+      its(:status) { should eql 200 }
+    end
+
+    context 'when an authenticated session exists' do
+      subject { get '/public',  {}, "rack.session" =>  { 'cas' => { user: 42} } }
+      its(:status) { should eql 200 }
+    end
+  end
 end

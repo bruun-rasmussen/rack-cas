@@ -43,6 +43,10 @@ class CASRequest
     end
   end
 
+  def new_session?
+    !(@request.session['cas'] || @request.session['cas_anonymous'])
+  end
+
   private
 
   def ticket_param

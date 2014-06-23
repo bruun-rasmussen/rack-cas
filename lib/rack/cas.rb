@@ -55,6 +55,14 @@ class Rack::CAS
       return [200, {'Content-Type' => 'text/plain'}, ['CAS Single-Sign-Out request intercepted.']]
     end
 
+
+    if @config[:gateway_mode] && cas_request.new_session?
+      puts "1. request.session: #{ request.session } "
+      request.session['cas_anonymous'] = true
+      puts "2. request.session: #{ request.session } "
+      return redirect_to server.login_url(request.url, gateway: true )
+    end
+
     response = @app.call(env)
 
     if response[0] == 401 # access denied
@@ -83,6 +91,7 @@ class Rack::CAS
     end
 
     request.session['cas'] = { 'user' => user, 'ticket' => ticket, 'extra_attributes' => extra_attrs }
+    request.session['cas_anonymous'] = false
   end
 
   def redirect_to(url, status=302)
