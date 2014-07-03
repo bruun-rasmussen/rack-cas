@@ -3,6 +3,8 @@ require 'addressable/uri'
 require 'rack-cas/server'
 require 'rack-cas/cas_request'
 
+TICKETS = {}
+
 class Rack::CAS
   attr_accessor :server_url
 
@@ -30,15 +32,24 @@ class Rack::CAS
       log env, 'rack-cas: Intercepting ticket validation request.'
 
       begin
-        user, extra_attrs = get_user(request.url, cas_request.ticket)
+        user, extra_attrs, pgt_iou = get_user(request.url, cas_request.ticket, pgt_callback_url(request))
+        proxy_ticket = get_proxy_ticket(pgt_iou)
       rescue RackCAS::ServiceValidationResponse::TicketInvalidError
         log env, 'rack-cas: Invalid ticket. Redirecting to CAS login.'
 
         return redirect_to server.login_url(cas_request.service_url).to_s
       end
 
-      store_session request, user, cas_request.ticket, extra_attrs
+      store_session request, user, cas_request.ticket, extra_attrs, proxy_ticket
       return redirect_to cas_request.service_url
+    end
+
+    if cas_request.pgt_callback?
+      log env, 'rack-cas: PGT Callback request.'
+
+      pgt_iou, pgt_id = cas_request.pgt_params
+      ticket_store[pgt_iou] = pgt_id
+      return [200, {'Content-Type' => 'text/plain'}, ['CAS PGT Callback request intercepted.']]
     end
 
     if cas_request.logout?
@@ -57,17 +68,14 @@ class Rack::CAS
 
 
     if @config[:gateway_mode] && cas_request.new_session?
-      puts "1. request.session: #{ request.session } "
       request.session['cas_anonymous'] = true
-      puts "2. request.session: #{ request.session } "
-      return redirect_to server.login_url(request.url, gateway: true )
+      return redirect_to server.login_url(request.url, gateway: true ).to_s
     end
 
     response = @app.call(env)
 
     if response[0] == 401 # access denied
       log env, 'rack-cas: Intercepting 401 access denied response. Redirecting to CAS login.'
-
       redirect_to server.login_url(request.url).to_s
     else
       response
@@ -80,17 +88,27 @@ class Rack::CAS
     @server ||= RackCAS::Server.new(@server_url)
   end
 
-  def get_user(service_url, ticket)
-    server.validate_service(service_url, ticket)
+  def get_user(service_url, ticket, pgt_callback_url)
+    server.validate_service(service_url, ticket, pgt_callback_url)
   end
 
-  def store_session(request, user, ticket, extra_attrs = {})
+  def get_proxy_ticket(pgt_iou)
+    proxy_service_url = @config[:proxy_service_url]
+    pgt = ticket_store[pgt_iou]
+    server.validate_proxy_granting_ticket(proxy_service_url, pgt)
+  end
+
+  def store_session(request, user, ticket, extra_attrs = {}, proxy_ticket)
     if @config[:extra_attributes_filter]
       filter = Array(@config[:extra_attributes_filter]).map(&:to_s)
       extra_attrs = extra_attrs.select { |key, val| filter.include? key }
     end
-
-    request.session['cas'] = { 'user' => user, 'ticket' => ticket, 'extra_attributes' => extra_attrs }
+    request.session['cas'] = {
+      'user' => user,
+      'ticket' => ticket,
+      'extra_attributes' => extra_attrs
+    }
+    request.session['cas']['proxy_ticket'] = proxy_ticket
     request.session['cas_anonymous'] = false
   end
 
@@ -104,5 +122,13 @@ class Rack::CAS
     else
       env['rack.errors'].write(message)
     end
+  end
+
+  def ticket_store
+    TICKETS
+  end
+
+  def pgt_callback_url(request)
+    request.scheme + '://' + request.host_with_port + request.script_name + '/pgt_callback'
   end
 end

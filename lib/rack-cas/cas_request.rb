@@ -33,6 +33,10 @@ class CASRequest
     !!(@request.get? && ticket_param && ticket_param.to_s =~ /\AST\-[^\s]{1,253}\Z/)
   end
 
+  def pgt_callback?
+    !!(@request.get? && path_matches?('/pgt_callback'))
+  end
+
   def path_matches?(strings_or_regexps)
     Array(strings_or_regexps).any? do |matcher|
       if matcher.is_a? Regexp
@@ -45,6 +49,10 @@ class CASRequest
 
   def new_session?
     !(@request.session['cas'] || @request.session['cas_anonymous'])
+  end
+
+  def pgt_params
+    @request.params['pgtIou'] && @request.params['pgtId'] && [ @request.params['pgtIou'], @request.params['pgtId'] ]
   end
 
   private

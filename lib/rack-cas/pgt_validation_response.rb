@@ -1,5 +1,5 @@
 module RackCAS
-  class ServiceValidationResponse
+  class PGTValidationResponse
     class AuthenticationFailure < StandardError; end
     class RequestInvalidError < AuthenticationFailure; end
     class TicketInvalidError < AuthenticationFailure; end
@@ -11,9 +11,9 @@ module RackCAS
       @url = URL.parse(url)
     end
 
-    def user
+    def proxy_ticket
       if success?
-        xml.xpath('/cas:serviceResponse/cas:authenticationSuccess/cas:user').text
+        xml.xpath("cas:serviceResponse//cas:proxyTicket").text
       else
         case failure_code
         when 'INVALID_REQUEST'
@@ -28,47 +28,14 @@ module RackCAS
       end
     end
 
-    def extra_attributes
-      attrs = {}
-
-      raise AuthenticationFailure, failure_message unless success?
-
-      # Jasig style
-      if attr_node = xml.at('/cas:serviceResponse/cas:authenticationSuccess/cas:attributes')
-        attr_node.children.each do |node|
-          if node.is_a? Nokogiri::XML::Element
-            attrs[node.name] = node.text
-          end
-        end
-
-      # RubyCas-Server style
-      else
-        xml.at('/cas:serviceResponse/cas:authenticationSuccess').children.each do |node|
-          if node.is_a? Nokogiri::XML::Element
-            if !node.namespace || !node.namespace.prefix == 'cas'
-              # TODO: support JSON encoding
-              attrs[node.name] = YAML.load node.text.strip
-            end
-          end
-        end
-      end
-
-      attrs
-    end
-
-    def pgt_iou
-      # TODO: Fail with appropriate error if not success?
-      xml.xpath("cas:serviceResponse//cas:proxyGrantingTicket").text
-    end
-
     protected
 
     def success?
-      @success ||= !!xml.at('/cas:serviceResponse/cas:authenticationSuccess')
+      @success ||= !!xml.at('/cas:serviceResponse/cas:proxySuccess')
     end
 
     def authentication_failure
-      @authentication_failure ||= xml.at('/cas:serviceResponse/cas:authenticationFailure')
+      @authentication_failure ||= xml.at('/cas:serviceResponse/cas:proxyFailure')
     end
 
     def failure_message

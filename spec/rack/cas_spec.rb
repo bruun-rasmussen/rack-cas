@@ -101,4 +101,10 @@ describe Rack::CAS do
       its(:status) { should eql 200 }
     end
   end
+
+  describe 'proxying' do
+    let(:app_options) { { proxy: true } }
+
+
+  end
 end
