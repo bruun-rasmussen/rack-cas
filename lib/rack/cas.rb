@@ -33,7 +33,7 @@ class Rack::CAS
 
       begin
         user, extra_attrs, pgt_iou = get_user(request.url, cas_request.ticket, pgt_callback_url(request))
-        proxy_ticket = get_proxy_ticket(pgt_iou)
+        proxy_ticket = get_proxy_ticket(pgt_iou) if @config[:proxy_service_url]
       rescue RackCAS::ServiceValidationResponse::TicketInvalidError
         log env, 'rack-cas: Invalid ticket. Redirecting to CAS login.'
 
@@ -66,10 +66,20 @@ class Rack::CAS
       return [200, {'Content-Type' => 'text/plain'}, ['CAS Single-Sign-Out request intercepted.']]
     end
 
+    if cas_request.session_exists?
 
-    if @config[:gateway_mode] && cas_request.new_session?
+      if cas_request.guest_param?
+        # Session exists, so there is no need to keep the CAS query parameter
+        return redirect_to RackCAS::URL.parse(request.url).remove_param('cas').to_s
+      end
+
+    elsif @config[:gateway_mode] && !skip_gateway?(cas_request)
+
       request.session['cas_anonymous'] = true
+      log env, 'rack-cas: Gateway. Redirecting to ' + server.login_url(request.url, gateway: true ).to_s
+      log env, 'rack-cas: request.url = ' + request.url
       return redirect_to server.login_url(request.url, gateway: true ).to_s
+
     end
 
     response = @app.call(env)
@@ -130,5 +140,20 @@ class Rack::CAS
 
   def pgt_callback_url(request)
     request.scheme + '://' + request.host_with_port + request.script_name + '/pgt_callback'
+  end
+
+  def skip_gateway?(request)
+    request.guest_param? || [
+      /Googlebot/,
+      /Baiduspider/,
+      /Bingbot/,
+      /Yahoo!/,
+      /iaskspider/,
+      /facebookexternalhit/,
+      /Twitterbot/,
+      /LinkedInBot/,
+      /Google \(\+https:\/\/developers.google.com\/\+\/web\/snippet\/\)/,
+      /Pinterest/
+    ].any? { |pattern| pattern =~ request.user_agent }
   end
 end

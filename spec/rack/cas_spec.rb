@@ -89,16 +89,37 @@ describe Rack::CAS do
 
     context 'when no session exists' do
       its(:status) { should eql 302 }
+      it 'should add a guest parameter to the requested url and use that as a service url' do
+        expect(subject.location).to match(%r{http://example.com/cas/login\?gateway=true&service=http%3A%2F%2Fexample.org%2Fpublic%3Fcas%3Dguest})
+      end
+
+      context 'when the requested url has a guest parameter' do
+        subject { get '/public?cas=guest' }
+        its(:status) { should eql 200 }
+      end
+
     end
 
     context 'when an anonymous session exists' do
       subject { get '/public',  {}, "rack.session" =>  {'cas_anonymous' => true}}
       its(:status) { should eql 200 }
+
+      context 'when the requested url has a guest parameter' do
+        subject { get '/public?cas=guest',  {}, "rack.session" =>  {'cas_anonymous' => true} }
+        its(:status) { should eql 302 }
+        its(:location) { should eql 'http://example.org/public' }
+      end
     end
 
     context 'when an authenticated session exists' do
       subject { get '/public',  {}, "rack.session" =>  { 'cas' => { user: 42} } }
       its(:status) { should eql 200 }
+
+      context 'when the requested url has a guest parameter' do
+        subject { get '/public?cas=guest',  {}, "rack.session" =>  {'cas_anonymous' => true} }
+        its(:status) { should eql 302 }
+        its(:location) { should eql 'http://example.org/public' }
+      end
     end
   end
 

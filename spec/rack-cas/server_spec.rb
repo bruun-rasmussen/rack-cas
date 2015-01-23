@@ -15,7 +15,7 @@ describe RackCAS::Server do
 
     context 'with params' do
       subject { server.login_url(service_url, gateway: 'true') }
-      its(:to_s) { should eql 'http://example.com/cas/login?gateway=true&service=http%3A%2F%2Fexample.org%2Fwhatever' }
+      its(:to_s) { should eql 'http://example.com/cas/login?gateway=true&service=http%3A%2F%2Fexample.org%2Fwhatever%3Fcas%3Dguest' }
     end
   end
 
@@ -43,7 +43,7 @@ describe RackCAS::Server do
     its(:last) { should be_kind_of Hash }
   end
 
-  describe :validate_service_url do    
+  describe :validate_service_url do
     subject { server.send(:validate_service_url, service_url, ticket) }
     its(:to_s) { should eql 'http://example.com/cas/serviceValidate?service=http%3A%2F%2Fexample.org%2Fwhatever&ticket=ST-0123456789ABCDEFGHIJKLMNOPQRS'}
   end

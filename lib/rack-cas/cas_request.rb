@@ -48,11 +48,24 @@ class CASRequest
   end
 
   def new_session?
-    !(@request.session['cas'] || @request.session['cas_anonymous'])
+    return false if guest_param?
+    !session_exists?
   end
 
   def pgt_params
     @request.params['pgtIou'] && @request.params['pgtId'] && [ @request.params['pgtIou'], @request.params['pgtId'] ]
+  end
+
+  def user_agent
+    @user_agent ||= @request.user_agent
+  end
+
+  def guest_param?
+    @guest_param ||= Hash(RackCAS::URL.parse(@request.url).query_values)['cas'] == 'guest'
+  end
+
+  def session_exists?
+    @session_exists ||= @request.session['cas'] || @request.session['cas_anonymous']
   end
 
   private
