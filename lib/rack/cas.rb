@@ -46,9 +46,7 @@ class Rack::CAS
 
     if cas_request.pgt_callback?
       log env, 'rack-cas: PGT Callback request.'
-
-      pgt_iou, pgt_id = cas_request.pgt_params
-      ticket_store[pgt_iou] = pgt_id
+      store_pgt(cas_request, env)
       return [200, {'Content-Type' => 'text/plain'}, ['CAS PGT Callback request intercepted.']]
     end
 
@@ -104,7 +102,7 @@ class Rack::CAS
 
   def get_proxy_ticket(pgt_iou)
     proxy_service_url = @config[:proxy_service_url]
-    pgt = ticket_store[pgt_iou]
+    pgt = get_pgt(pgt_iou)
     server.validate_proxy_granting_ticket(proxy_service_url, pgt)
   end
 
@@ -135,11 +133,25 @@ class Rack::CAS
   end
 
   def ticket_store
-    TICKETS
+    @ticket_store ||= @config.fetch(:ticket_store).call
   end
 
   def pgt_callback_url(request)
     request.scheme + '://' + request.host_with_port + request.script_name + '/pgt_callback'
+  end
+
+  def get_pgt(pgt_iou)
+    ticket_store.read(pgt_iou)
+  end
+
+  def store_pgt(cas_request, env)
+    # CAS actually calls back twice, the first time with no params
+    return unless cas_request.pgt_params
+
+    pgt_iou, pgt_id = cas_request.pgt_params
+    log env, "store #{pgt_iou} #{pgt_id}"
+
+    ticket_store.write pgt_iou, pgt_id
   end
 
   def skip_gateway?(request)
