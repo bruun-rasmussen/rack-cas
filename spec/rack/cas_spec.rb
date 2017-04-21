@@ -112,8 +112,23 @@ describe Rack::CAS do
     end
 
     context 'when an authenticated session exists' do
-      subject { get '/public',  {}, "rack.session" =>  { 'cas' => { user: 42} } }
-      its(:status) { should eql 200 }
+      subject { get '/public',  {}, 'REMOTE_ADDR' => remote_addr, "rack.session" =>  { 'cas' => { user: 42, 'client_ip' => '1.2.3.4' } } }
+
+      context 'when the request IP matches the IP used to create the session' do
+        let(:remote_addr) { '1.2.3.4' }
+
+        its(:status) { should eql 200 }
+      end
+
+      context 'when the request IP does not match the IP used to create the session' do
+        let(:remote_addr) { '5.6.7.8' }
+
+        it 'destroys the session' do
+          subject
+          last_request.env['rack.session']['cas'].should be_nil
+        end
+        its(:status) { should eql 302 }
+      end
 
       context 'when the requested url has a guest parameter' do
         subject { get '/public?cas=guest',  {}, "rack.session" =>  {'cas_anonymous' => true} }

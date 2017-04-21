@@ -19,5 +19,6 @@ spec = Gem::Specification.new do |s|
   s.add_dependency 'nokogiri', '~> 1.5'
   s.add_development_dependency 'rspec', '~> 2.11'
   s.add_development_dependency 'rack-test', '~> 0.6'
-  s.add_development_dependency 'webmock', '~> 1.20'
+  s.add_development_dependency 'webmock', '>= 2.3' #'~> 1.20'
+	s.add_development_dependency 'byebug'
 end
