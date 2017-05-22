@@ -84,13 +84,21 @@ class Rack::CAS
 
     if response[0] == 401 # access denied
       log env, 'rack-cas: Intercepting 401 access denied response. Redirecting to CAS login.'
-      redirect_to server.login_url(request.url).to_s
+      if request.xhr?
+        redirect_javascript server.login_url(request.url), 401
+      else
+        redirect_to server.login_url(request.url).to_s
+      end
     else
       response
     end
   end
 
   protected
+
+  def redirect_javascript destination, status
+    Rack::Response.new "window.location = '#{ destination }';", status, { 'Content-Type' => 'application/javascript' }
+  end
 
   def server
     @server ||= RackCAS::Server.new(@server_url)
