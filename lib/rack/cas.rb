@@ -66,20 +66,6 @@ class Rack::CAS
 
     if cas_request.session_exists?
 
-      # If client is logged in, but has a different IP address from the last time she visited,
-      # we destroy the session and redirect to CAS (if gateway mode enabled) to get a fresh ticket.
-      if cas_request.client_ip_changed?
-        request.session.clear
-        if @config[:gateway_mode] && !skip_gateway?(cas_request)
-
-            request.session['cas_anonymous'] = true
-            log env, 'rack-cas: Gateway. Redirecting to ' + server.login_url(request.url, gateway: true ).to_s
-            log env, 'rack-cas: request.url = ' + request.url
-
-            return redirect_to server.login_url(request.url, gateway: true ).to_s
-          end
-        end
-
       if cas_request.guest_param?
         # Session exists, so there is no need to keep the CAS query parameter
         return redirect_to RackCAS::URL.parse(request.url).remove_param('cas').to_s
@@ -88,7 +74,7 @@ class Rack::CAS
     elsif @config[:gateway_mode] && !skip_gateway?(cas_request)
 
       request.session['cas_anonymous'] = true
-      log env, 'rack-cas: Gateway. Redirecting to ' + server.login_url(request.url, gateway: true).to_s
+      log env, 'rack-cas: Gateway. Redirecting to ' + server.login_url(request.url, gateway: true ).to_s
       log env, 'rack-cas: request.url = ' + request.url
       return redirect_to server.login_url(request.url, gateway: true ).to_s
 
@@ -128,7 +114,6 @@ class Rack::CAS
     request.session['cas'] = {
       'user' => user,
       'ticket' => ticket,
-      'client_ip' => request.ip,
       'extra_attributes' => extra_attrs
     }
     request.session['cas']['proxy_ticket'] = proxy_ticket

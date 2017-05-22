@@ -9,7 +9,6 @@ require 'webmock/rspec'
 require 'rack/cas'
 require 'rack/fake_cas'
 require 'fixtures/cas_test_app'
-require 'byebug'
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods

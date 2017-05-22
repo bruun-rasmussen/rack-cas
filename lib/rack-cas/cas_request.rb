@@ -68,10 +68,6 @@ class CASRequest
     @session_exists ||= @request.session['cas'] || @request.session['cas_anonymous']
   end
 
-  def client_ip_changed?
-    @request.session['cas'] && @request.session['cas']['client_ip'] != @request.ip
-  end
-
   private
 
   def ticket_param
