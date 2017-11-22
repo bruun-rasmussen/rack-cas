@@ -83,10 +83,6 @@ class Rack::CAS
     response = @app.call(env)
     is_script = request.get_header('Accept') =~ JAVASCRIPT_MIME_TYPE || response[1]['Content-Type'] =~ JAVASCRIPT_MIME_TYPE
 
-    if response[2].respond_to? :body
-      log env, response[2].body, :debug
-    end
-
     if response[0] == 401 && !is_script
       log env, 'rack-cas: Intercepting 401 access denied response. Redirecting to CAS login.'
       redirect_to server.login_url(request.url).to_s
