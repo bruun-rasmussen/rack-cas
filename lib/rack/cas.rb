@@ -81,14 +81,22 @@ class Rack::CAS
     end
 
     response = @app.call(env)
+
+    response_status, response_headers, response_body = response
+
+    return response unless response_status == 401
+
+    # Unauthorized:
+
     is_script = request.get_header('Accept') =~ JAVASCRIPT_MIME_TYPE || response[1]['Content-Type'] =~ JAVASCRIPT_MIME_TYPE
 
-    if response[0] == 401 && !is_script
-      log env, 'rack-cas: Intercepting 401 access denied response. Redirecting to CAS login.'
-      redirect_to server.login_url(request.url).to_s
-    else
-      response
-    end
+    return response if is_script
+
+    return turbolinks_force_reload if turbolinks? env
+
+    log env, 'rack-cas: Intercepting 401 access denied response. Redirecting to CAS login.'
+    redirect_to server.login_url(request.url).to_s
+
   end
 
   JAVASCRIPT_MIME_TYPE = Regexp.union 'application/javascript', 'text/javascript'
@@ -99,8 +107,28 @@ class Rack::CAS
     Rack::Response.new "window.location.reload();", status, { 'Content-Type' => 'application/javascript' }
   end
 
+  def turbolinks_force_reload
+    html = <<~HTML
+    <!doctype html>
+    <html lang=en>
+      <head>
+        <meta charset=utf-8>
+        <title></title>
+        <script>window.location.reload();</script>
+      </head>
+      <body>
+      </body>
+    </html>
+    HTML
+    Rack::Response.new html, 200, {}
+  end
+
   def server
     @server ||= RackCAS::Server.new(@server_url)
+  end
+
+  def turbolinks? env
+    env['HTTP_TURBOLINKS_REFERRER'].to_s != ''
   end
 
   def get_user(service_url, ticket, pgt_callback_url)
