@@ -120,7 +120,7 @@ class Rack::CAS
       </body>
     </html>
     HTML
-    Rack::Response.new html, 200, {}
+    [ 200, {}, [ html ] ]
   end
 
   def server
