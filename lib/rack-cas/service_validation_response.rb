@@ -4,6 +4,7 @@ module RackCAS
     class RequestInvalidError < AuthenticationFailure; end
     class TicketInvalidError < AuthenticationFailure; end
     class ServiceInvalidError < AuthenticationFailure; end
+    class MissingPGT < AuthenticationFailure; end
 
     REQUEST_HEADERS = { 'Accept' => '*/*' }
 
@@ -57,7 +58,10 @@ module RackCAS
     end
 
     def pgt_iou
-      # TODO: Fail with appropriate error if not success?
+      if xml.xpath("cas:serviceResponse//cas:proxyGrantingTicket").empty?
+        fail MissingPGT, "CAS was probably unable to connect to the pgt_callback_url"
+      end
+
       xml.xpath("cas:serviceResponse//cas:proxyGrantingTicket").text
     end
 
