@@ -165,7 +165,9 @@ class Rack::CAS
   end
 
   def log(env, message, level = :info)
-    if env['rack.logger']
+    if defined?(Rails)
+      Rails.logger.send level, message
+    elsif env['rack.logger']
       env['rack.logger'].send(level, message)
     else
       env['rack.errors'].write(message)
