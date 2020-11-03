@@ -183,7 +183,7 @@ class Rack::CAS
   end
 
   def get_pgt(pgt_iou)
-    ticket_store.read(pgt_iou)
+    ticket_store.read(pgt_iou) or fail "No PGT found in ticket store for PGT_IOU #{pgt_iou}"
   end
 
   def store_pgt(cas_request, env)
