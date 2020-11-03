@@ -38,6 +38,11 @@ class Rack::CAS
         log env, 'rack-cas: Invalid ticket. Redirecting to CAS login.'
 
         return redirect_to server.login_url(cas_request.service_url).to_s
+
+      rescue RackCAS::ServiceValidationResponse::CASUnavailable => e
+        log env, 'rack-cas: CAS Unavailable. This is probably because we attempted to validate the same ticket twice'
+
+        return redirect_to cas_request.service_url
       end
 
       store_session request, user, cas_request.ticket, extra_attrs, proxy_ticket

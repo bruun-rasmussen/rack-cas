@@ -5,6 +5,7 @@ module RackCAS
     class TicketInvalidError < AuthenticationFailure; end
     class ServiceInvalidError < AuthenticationFailure; end
     class MissingPGT < AuthenticationFailure; end
+    class CASUnavailable < AuthenticationFailure; end
 
     REQUEST_HEADERS = { 'Accept' => '*/*' }
 
@@ -96,6 +97,10 @@ module RackCAS
 
       http.start do |conn|
         @response = conn.get(@url.request_uri, REQUEST_HEADERS)
+      end
+
+      unless response.code.to_i < 400
+        fail CASUnavailable, @response.body
       end
 
       @response
