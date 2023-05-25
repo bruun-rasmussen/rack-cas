@@ -14,7 +14,10 @@ class CASRequest
   end
 
   def service_url
-    RackCAS::URL.parse(@request.url).remove_param('ticket').to_s
+    RackCAS::URL.parse(@request.url)
+                .remove_param('ticket')
+                .add_params(login: 'true')
+                .to_s
   end
 
   def logout?

@@ -12,7 +12,7 @@ describe CASRequest do
     before { get '/private/something?ticket=ST-0123456789ABCDEFGHIJKLMNOPQRS' }
     its(:ticket_validation?) { should be_true }
     its(:ticket) { should eql 'ST-0123456789ABCDEFGHIJKLMNOPQRS' }
-    its(:service_url) { should eql 'http://example.org/private/something' }
+    its(:service_url) { should eql 'http://example.org/private/something?login=true' }
     its(:logout?) { should be_false }
     its(:single_sign_out?) { should be_false }
   end
