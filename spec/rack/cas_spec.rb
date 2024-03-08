@@ -70,7 +70,7 @@ describe Rack::CAS do
       { session_store: session_store }
     }
 
-    subject { post "/?logoutRequest=#{URI.encode(fixture('single_sign_out_request.xml'))}" }
+    subject { post "/?logoutRequest=#{CGI.escape(fixture('single_sign_out_request.xml'))}" }
     its(:status) { should eql 200 }
     its(:body) { should eql 'CAS Single-Sign-Out request intercepted.' }
   end
