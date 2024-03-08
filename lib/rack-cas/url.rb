@@ -21,7 +21,7 @@ module RackCAS
       self.tap do |u|
         u.query_values = (u.query_values || {}).tap do |qv|
           params.each do |key, value|
-            qv[key] = value
+            qv[key.to_s] = value
           end
         end
       end
