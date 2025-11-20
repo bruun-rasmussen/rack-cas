@@ -71,6 +71,33 @@ class CASRequest
     @session_exists ||= @request.session['cas'] || @request.session['cas_anonymous']
   end
 
+  def html?
+    @request.env['HTTP_ACCEPT'].to_s.include?('text/html')
+  end
+
+  def xhr?
+    @request.xhr?
+  end
+
+  def get?
+    @request.get?
+  end
+
+  def bot?
+    [
+      /Googlebot/,
+      /Baiduspider/,
+      /Bingbot/,
+      /Yahoo!/,
+      /iaskspider/,
+      /facebookexternalhit/,
+      /Twitterbot/,
+      /LinkedInBot/,
+      /Google \(\+https:\/\/developers.google.com\/\+\/web\/snippet\/\)/,
+      /Pinterest/
+    ].any? { |pattern| pattern =~ user_agent }
+  end
+
   private
 
   def ticket_param

@@ -197,17 +197,14 @@ class Rack::CAS
   end
 
   def skip_gateway?(request)
-    request.guest_param? || [
-      /Googlebot/,
-      /Baiduspider/,
-      /Bingbot/,
-      /Yahoo!/,
-      /iaskspider/,
-      /facebookexternalhit/,
-      /Twitterbot/,
-      /LinkedInBot/,
-      /Google \(\+https:\/\/developers.google.com\/\+\/web\/snippet\/\)/,
-      /Pinterest/
-    ].any? { |pattern| pattern =~ request.user_agent }
+    return true if request.guest_param?
+
+    return true unless request.html?
+
+    return true unless request.get?
+
+    return true if request.xhr?
+
+    request.bot?
   end
 end
