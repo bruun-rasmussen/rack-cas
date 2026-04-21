@@ -158,8 +158,9 @@ class Rack::CAS
       'extra_attributes' => extra_attrs
     }
     if pt_data.is_a?(Hash)
-      request.session['cas']['pgt']          = pt_data[:pgt]
-      request.session['cas']['proxy_ticket'] = pt_data[:proxy_ticket]
+      request.session['cas']['pgt']                    = pt_data[:pgt]
+      request.session['cas']['proxy_ticket']           = pt_data[:proxy_ticket]
+      request.session['cas']['proxy_ticket_issued_at'] = Time.now.to_i
     else
       request.session['cas']['proxy_ticket'] = pt_data
     end
