@@ -49,7 +49,6 @@ module RackCAS
     end
 
     def validate_pgt_url(service_url, proxy_granting_ticket)
-      puts "cas: validate_pgt_url(#{service_url}, #{proxy_granting_ticket})"
       @url.dup.append_path('proxy').add_params(service: service_url, pgt: proxy_granting_ticket)
     end
   end

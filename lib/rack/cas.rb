@@ -143,10 +143,11 @@ class Rack::CAS
   def get_proxy_ticket(pgt_iou)
     proxy_service_url = @config[:proxy_service_url]
     pgt = get_pgt(pgt_iou)
-    server.validate_proxy_granting_ticket(proxy_service_url, pgt)
+    proxy_ticket = server.validate_proxy_granting_ticket(proxy_service_url, pgt)
+    { pgt: pgt, proxy_ticket: proxy_ticket }
   end
 
-  def store_session(request, user, ticket, extra_attrs = {}, proxy_ticket)
+  def store_session(request, user, ticket, extra_attrs = {}, pt_data)
     if @config[:extra_attributes_filter]
       filter = Array(@config[:extra_attributes_filter]).map(&:to_s)
       extra_attrs = extra_attrs.select { |key, val| filter.include? key }
@@ -156,7 +157,12 @@ class Rack::CAS
       'ticket' => ticket,
       'extra_attributes' => extra_attrs
     }
-    request.session['cas']['proxy_ticket'] = proxy_ticket
+    if pt_data.is_a?(Hash)
+      request.session['cas']['pgt']          = pt_data[:pgt]
+      request.session['cas']['proxy_ticket'] = pt_data[:proxy_ticket]
+    else
+      request.session['cas']['proxy_ticket'] = pt_data
+    end
     request.session['cas_anonymous'] = false
   end
 

@@ -59,11 +59,8 @@ module RackCAS
     end
 
     def pgt_iou
-      if xml.xpath("cas:serviceResponse//cas:proxyGrantingTicket").empty?
-        fail MissingPGT, "CAS was probably unable to connect to the pgt_callback_url"
-      end
-
-      xml.xpath("cas:serviceResponse//cas:proxyGrantingTicket").text
+      value = xml.xpath("cas:serviceResponse//cas:proxyGrantingTicket").text
+      value.empty? ? nil : value
     end
 
     protected
