@@ -3,6 +3,7 @@ $:.unshift File.expand_path(File.dirname(__FILE__))
 
 require 'bundler/setup'
 require 'rspec'
+require 'rspec/its'
 require 'rack'
 require 'rack/test'
 require 'webmock/rspec'

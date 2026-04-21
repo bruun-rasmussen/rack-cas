@@ -23,12 +23,12 @@ describe Rack::CAS do
   describe 'ticket validation request' do
     subject { get '/private?search=blah&ticket=ST-0123456789ABCDEFGHIJKLMNOPQRS' }
     its(:status) { should eql 302 }
-    its(:location) { should eql 'http://example.org/private?search=blah' }
+    its(:location) { should eql 'http://example.org/private?login=true&search=blah' }
 
     context 'without additional query parameters' do
       subject { get '/private?ticket=ST-0123456789ABCDEFGHIJKLMNOPQRS' }
       its(:status) { should eql 302 }
-      its(:location) { should eql 'http://example.org/private' }
+      its(:location) { should eql 'http://example.org/private?login=true' }
     end
 
     context 'with extra_attributes_filter set' do
@@ -42,9 +42,9 @@ describe Rack::CAS do
     end
 
     context 'with an invalid ticket' do
-      before { RackCAS::ServiceValidationResponse.any_instance.stub(:user) { raise RackCAS::ServiceValidationResponse::TicketInvalidError } }
+      before { allow_any_instance_of(RackCAS::ServiceValidationResponse).to receive(:user).and_raise(RackCAS::ServiceValidationResponse::TicketInvalidError) }
       its(:status) { should eql 302 }
-      its(:location) { should eql 'http://example.com/cas/login?service=http%3A%2F%2Fexample.org%2Fprivate%3Fsearch%3Dblah' }
+      its(:location) { should eql 'http://example.com/cas/login?service=http%3A%2F%2Fexample.org%2Fprivate%3Flogin%3Dtrue%26search%3Dblah' }
     end
   end
 
@@ -64,8 +64,9 @@ describe Rack::CAS do
 
   describe 'single sign out request' do
     let(:app_options) {
-      session_store = double('session_store').stub(:destroy_session_by_cas_ticket => 1)
-      session_store.should_receive(:destroy_session_by_cas_ticket).with(ticket)
+      session_store = double('session_store')
+      allow(session_store).to receive(:destroy_session_by_cas_ticket).and_return(1)
+      expect(session_store).to receive(:destroy_session_by_cas_ticket).with(ticket)
 
       { session_store: session_store }
     }
@@ -85,9 +86,10 @@ describe Rack::CAS do
 
   describe 'gateway_mode' do
     let(:app_options) { { gateway_mode: true } }
-    subject { get '/public' }
 
     context 'when no session exists' do
+      subject { get '/public', {}, { 'HTTP_ACCEPT' => 'text/html' } }
+
       its(:status) { should eql 302 }
       it 'should add a guest parameter to the requested url and use that as a service url' do
         expect(subject.location).to match(%r{http://example.com/cas/login\?gateway=true&service=http%3A%2F%2Fexample.org%2Fpublic%3Fcas%3Dguest})
