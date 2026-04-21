@@ -5,7 +5,7 @@ PROJECT_NAME = "{{ config_root | basename }}"
 BUNDLE_PATH = "vendor/bundle"
 
 [tools]
-ruby = "3.1.4"
+ruby = "3.4.5"
 
 [tasks."bundle:install"]
 description = "Install gem dependencies"
