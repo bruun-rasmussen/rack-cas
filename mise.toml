@@ -1,0 +1,17 @@
+min_version = "2024.9.5"
+
+[env]
+PROJECT_NAME = "{{ config_root | basename }}"
+BUNDLE_PATH = "vendor/bundle"
+
+[tools]
+ruby = "3.1.4"
+
+[tasks."bundle:install"]
+description = "Install gem dependencies"
+run = "bundle install"
+
+[tasks.test]
+description = "Run test suite"
+alias = "t"
+run = "bundle exec rspec"

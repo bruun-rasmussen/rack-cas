@@ -4,3 +4,5 @@
 .ruby-version
 Gemfile.lock
 pkg/*
+vendor/bundle
+.direnv
