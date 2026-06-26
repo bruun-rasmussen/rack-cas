@@ -62,10 +62,10 @@ class Rack::CAS
       return redirect_to server.logout_url(request.params).to_s
     end
 
-    if cas_request.single_sign_out? && @session_store
+    if cas_request.single_sign_out?
       log env, 'rack-cas: Intercepting single-sign-out request.'
 
-      @session_store.destroy_session_by_cas_ticket(cas_request.ticket)
+      @session_store.destroy_session_by_cas_ticket(cas_request.ticket) if @session_store
       return [200, {'Content-Type' => 'text/plain'}, ['CAS Single-Sign-Out request intercepted.']]
     end
 

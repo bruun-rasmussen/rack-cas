@@ -10,9 +10,6 @@ module RackCAS
 
     def login_url(service_url, params = {})
       service_url = URL.parse(service_url)
-      if params[:gateway]
-        service_url.add_params cas: 'guest'
-      end
       @url.dup.append_path('login').add_params({service: service_url.to_s}.merge(params))
     end
 

@@ -91,8 +91,8 @@ describe Rack::CAS do
       subject { get '/public', {}, { 'HTTP_ACCEPT' => 'text/html' } }
 
       its(:status) { should eql 302 }
-      it 'should add a guest parameter to the requested url and use that as a service url' do
-        expect(subject.location).to match(%r{http://example.com/cas/login\?gateway=true&service=http%3A%2F%2Fexample.org%2Fpublic%3Fcas%3Dguest})
+      it 'should use the requested url as the service url without adding a guest parameter' do
+        expect(subject.location).to match(%r{http://example.com/cas/login\?gateway=true&service=http%3A%2F%2Fexample.org%2Fpublic})
       end
 
       context 'when the requested url has a guest parameter' do
