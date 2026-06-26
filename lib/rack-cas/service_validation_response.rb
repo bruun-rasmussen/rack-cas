@@ -25,7 +25,10 @@ module RackCAS
         when 'INVALID_SERVICE'
           raise ServiceInvalidError, failure_message
         else
-          raise AuthenticationFailure, failure_message
+          # Unknown or missing code — treat as invalid ticket so the user gets a
+          # clean redirect to login rather than a 500. Known case: CAS omits the
+          # code attribute when the failure is a wrapped NullPointerException.
+          raise TicketInvalidError, failure_message
         end
       end
     end
