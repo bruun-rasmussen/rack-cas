@@ -100,6 +100,11 @@ describe Rack::CAS do
         its(:status) { should eql 200 }
       end
 
+      context 'when the referer is the CAS server' do
+        subject { get '/public', {}, { 'HTTP_ACCEPT' => 'text/html', 'HTTP_REFERER' => 'http://example.com/cas/login' } }
+        its(:status) { should eql 200 }
+      end
+
     end
 
     context 'when an anonymous session exists' do

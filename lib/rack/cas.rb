@@ -205,13 +205,15 @@ class Rack::CAS
 
   def skip_gateway?(request)
     return true if request.guest_param?
-
+    return true if came_from_cas?(request)
     return true unless request.html?
-
     return true unless request.get?
-
     return true if request.xhr?
-
     request.bot?
+  end
+
+  def came_from_cas?(request)
+    referer = request.referer
+    referer && referer.start_with?(@server_url)
   end
 end

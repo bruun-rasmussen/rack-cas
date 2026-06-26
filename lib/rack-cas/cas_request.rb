@@ -63,6 +63,10 @@ class CASRequest
     @user_agent ||= @request.user_agent
   end
 
+  def referer
+    @request.env['HTTP_REFERER']
+  end
+
   def guest_param?
     @guest_param ||= Hash(RackCAS::URL.parse(@request.url).query_values)['cas'] == 'guest'
   end
