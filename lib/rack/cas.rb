@@ -209,7 +209,18 @@ class Rack::CAS
     return true unless request.html?
     return true unless request.get?
     return true if request.xhr?
-    request.bot?
+    bot? request
+  end
+
+  # A :bot_matcher configured by the application takes precedence over the
+  # built-in (and aging) user agent list in CASRequest#bot?. It is called with
+  # the user agent string and should return truthy for bots.
+  def bot?(request)
+    if (matcher = @config[:bot_matcher])
+      matcher.call(request.user_agent)
+    else
+      request.bot?
+    end
   end
 
   def came_from_cas?(request)

@@ -105,6 +105,25 @@ describe Rack::CAS do
         its(:status) { should eql 200 }
       end
 
+      context 'when the user agent is in the built-in bot list' do
+        subject { get '/public', {}, { 'HTTP_ACCEPT' => 'text/html', 'HTTP_USER_AGENT' => 'Googlebot/2.1 (+http://www.google.com/bot.html)' } }
+        its(:status) { should eql 200 }
+      end
+
+      context 'with a bot_matcher configured' do
+        let(:app_options) { { gateway_mode: true, bot_matcher: ->(ua) { ua.to_s.include? 'Amazonbot' } } }
+
+        context 'when the user agent matches' do
+          subject { get '/public', {}, { 'HTTP_ACCEPT' => 'text/html', 'HTTP_USER_AGENT' => 'Mozilla/5.0 (compatible; Amazonbot/0.1; +https://developer.amazon.com/support/amazonbot)' } }
+          its(:status) { should eql 200 }
+        end
+
+        context 'when the user agent does not match, it replaces the built-in list' do
+          subject { get '/public', {}, { 'HTTP_ACCEPT' => 'text/html', 'HTTP_USER_AGENT' => 'Googlebot/2.1 (+http://www.google.com/bot.html)' } }
+          its(:status) { should eql 302 }
+        end
+      end
+
     end
 
     context 'when an anonymous session exists' do
